@@ -7,10 +7,10 @@ EXPOSE 80
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY ["Flavour_Wheel_Server.csproj", "./"]
-RUN dotnet restore "./Flavour_Wheel_Server.csproj"
+RUN dotnet restore "./Flavour_Wheel_Server.csproj" --verbosity detailed
 COPY . .
 WORKDIR "/src/."
-RUN dotnet build "Flavour_Wheel_Server.csproj" -c Release -o /app/build
+RUN dotnet build "Flavour_Wheel_Server.csproj" -c Release --verbosity detailed -o /app/build
 
 # Publish the app
 FROM build AS publish
