@@ -1,0 +1,6 @@
+@Flavour_Wheel_Server_HostAddress = http://localhost:5226
+
+GET {{Flavour_Wheel_Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

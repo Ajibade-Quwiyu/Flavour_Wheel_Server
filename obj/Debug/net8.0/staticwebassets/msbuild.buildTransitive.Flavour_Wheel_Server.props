@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\buildMultiTargeting\Flavour_Wheel_Server.props" />
+</Project>
