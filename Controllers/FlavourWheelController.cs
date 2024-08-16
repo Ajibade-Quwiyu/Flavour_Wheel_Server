@@ -64,5 +64,15 @@ namespace Flavour_Wheel_Server.Controllers
 
             return NoContent();
         }
+
+        // DELETE: api/flavourwheel
+        [HttpDelete]
+        public async Task<IActionResult> DeleteAll()
+        {
+            _context.FlavourWheels.RemoveRange(_context.FlavourWheels);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
     }
 }

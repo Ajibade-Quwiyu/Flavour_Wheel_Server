@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Flavour_Wheel_Server")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e3071ba5b86eef1d0255c92d524f1639016fa502")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4cac60cd0a72fee34cb4953fd37349bb2a1fc1a6")]
 [assembly: System.Reflection.AssemblyProductAttribute("Flavour_Wheel_Server")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Flavour_Wheel_Server")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
