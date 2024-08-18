@@ -49,6 +49,36 @@ namespace Flavour_Wheel_Server.Controllers
             return CreatedAtAction(nameof(GetById), new { id = adminServer.Id }, adminServer);
         }
 
+        // PUT: api/adminserver/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, AdminServer adminServer)
+        {
+            if (id != adminServer.Id)
+            {
+                return BadRequest();
+            }
+
+            _context.Entry(adminServer).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!AdminServerExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
+        }
+
         // DELETE: api/adminserver/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
@@ -73,6 +103,11 @@ namespace Flavour_Wheel_Server.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        private bool AdminServerExists(int id)
+        {
+            return _context.AdminServers.Any(e => e.Id == id);
         }
     }
 }

@@ -49,6 +49,36 @@ namespace Flavour_Wheel_Server.Controllers
             return CreatedAtAction(nameof(GetById), new { id = flavourWheel.Id }, flavourWheel);
         }
 
+        // PUT: api/flavourwheel/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, FlavourWheel flavourWheel)
+        {
+            if (id != flavourWheel.Id)
+            {
+                return BadRequest();
+            }
+
+            _context.Entry(flavourWheel).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!FlavourWheelExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
+        }
+
         // DELETE: api/flavourwheel/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
@@ -73,6 +103,11 @@ namespace Flavour_Wheel_Server.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        private bool FlavourWheelExists(int id)
+        {
+            return _context.FlavourWheels.Any(e => e.Id == id);
         }
     }
 }
