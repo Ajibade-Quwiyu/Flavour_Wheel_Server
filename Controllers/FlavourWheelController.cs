@@ -99,7 +99,7 @@ namespace Flavour_Wheel_Server.Controllers
         [HttpDelete]
         public async Task<IActionResult> DeleteAll()
         {
-            await _context.Database.ExecuteSqlRawAsync("TRUNCATE TABLE FlavourWheels; DBCC CHECKIDENT ('FlavourWheels', RESEED, 0);");
+            await _context.Database.ExecuteSqlRawAsync("DELETE FROM FlavourWheels; DBCC CHECKIDENT ('FlavourWheels', RESEED, 0);");
             return NoContent();
         }
 
