@@ -99,9 +99,7 @@ namespace Flavour_Wheel_Server.Controllers
         [HttpDelete]
         public async Task<IActionResult> DeleteAll()
         {
-            _context.AdminServers.RemoveRange(_context.AdminServers);
-            await _context.SaveChangesAsync();
-
+            await _context.Database.ExecuteSqlRawAsync("TRUNCATE TABLE AdminServers; DBCC CHECKIDENT ('AdminServers', RESEED, 0);");
             return NoContent();
         }
 
