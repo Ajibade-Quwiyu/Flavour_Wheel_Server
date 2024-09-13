@@ -99,7 +99,9 @@ namespace Flavour_Wheel_Server.Controllers
         [HttpDelete]
         public async Task<IActionResult> DeleteAll()
         {
-            await _context.Database.ExecuteSqlRawAsync("DELETE FROM FlavourWheels; DBCC CHECKIDENT ('FlavourWheels', RESEED, 0);");
+            // MySQL specific syntax to delete all rows and reset the auto-increment ID
+            await _context.Database.ExecuteSqlRawAsync("DELETE FROM FlavourWheels;");
+            await _context.Database.ExecuteSqlRawAsync("ALTER TABLE FlavourWheels AUTO_INCREMENT = 1;");
             return NoContent();
         }
 
