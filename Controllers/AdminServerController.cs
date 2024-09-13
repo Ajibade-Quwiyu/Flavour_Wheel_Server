@@ -95,6 +95,15 @@ namespace Flavour_Wheel_Server.Controllers
             return NoContent();
         }
 
+        // DELETE: api/adminserver
+        [HttpDelete]
+        public async Task<IActionResult> DeleteAll()
+        {
+            await _context.Database.ExecuteSqlRawAsync("DELETE FROM AdminServers;");
+            await _context.Database.ExecuteSqlRawAsync("ALTER TABLE AdminServers AUTO_INCREMENT = 0;");
+            return NoContent();
+        }
+
         private bool AdminServerExists(int id)
         {
             return _context.AdminServers.Any(e => e.Id == id);
