@@ -28,7 +28,9 @@ namespace Flavour_Wheel_Server.Controllers
         {
             try
             {
-                return await _context.FlavourWheels.ToListAsync();
+                var flavourWheels = await _context.FlavourWheels.ToListAsync();
+                _logger.LogInformation($"Retrieved {flavourWheels.Count} FlavourWheel entries");
+                return flavourWheels;
             }
             catch (Exception ex)
             {
@@ -47,9 +49,11 @@ namespace Flavour_Wheel_Server.Controllers
 
                 if (flavourWheel == null)
                 {
+                    _logger.LogWarning($"FlavourWheel with id {id} not found");
                     return NotFound($"FlavourWheel with id {id} not found");
                 }
 
+                _logger.LogInformation($"Retrieved FlavourWheel with id {id}");
                 return flavourWheel;
             }
             catch (Exception ex)
@@ -90,35 +94,36 @@ namespace Flavour_Wheel_Server.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, FlavourWheel flavourWheel)
         {
-            if (id != flavourWheel.Id)
-            {
-                return BadRequest("Id in URL does not match Id in the data");
-            }
-
-            _context.Entry(flavourWheel).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!FlavourWheelExists(id))
+                var existingFlavourWheel = await _context.FlavourWheels.FindAsync(id);
+
+                if (existingFlavourWheel == null)
                 {
-                    return NotFound($"FlavourWheel with id {id} not found");
+                    _logger.LogInformation($"FlavourWheel with id {id} not found. Creating new entry.");
+                    flavourWheel.Id = 0; // Ensure a new entry is created
+                    _context.FlavourWheels.Add(flavourWheel);
                 }
                 else
                 {
-                    throw;
+                    _context.Entry(existingFlavourWheel).CurrentValues.SetValues(flavourWheel);
                 }
+
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation($"FlavourWheel with id {flavourWheel.Id} updated/created successfully");
+                return Ok(flavourWheel);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                _logger.LogWarning($"Concurrency error occurred while updating FlavourWheel with id {id}");
+                return StatusCode(409, "The entity has been modified by another user. Please refresh and try again.");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error occurred while updating FlavourWheel with id {id}");
-                return StatusCode(500, "Internal server error occurred while updating the entity");
+                _logger.LogError(ex, $"Error occurred while updating/creating FlavourWheel with id {id}");
+                return StatusCode(500, "Internal server error occurred while updating/creating the entity");
             }
-
-            return NoContent();
         }
 
         // DELETE: api/flavourwheel/{id}
@@ -130,12 +135,14 @@ namespace Flavour_Wheel_Server.Controllers
                 var flavourWheel = await _context.FlavourWheels.FindAsync(id);
                 if (flavourWheel == null)
                 {
+                    _logger.LogWarning($"FlavourWheel with id {id} not found for deletion");
                     return NotFound($"FlavourWheel with id {id} not found");
                 }
 
                 _context.FlavourWheels.Remove(flavourWheel);
                 await _context.SaveChangesAsync();
 
+                _logger.LogInformation($"FlavourWheel with id {id} deleted successfully");
                 return NoContent();
             }
             catch (Exception ex)
@@ -152,7 +159,8 @@ namespace Flavour_Wheel_Server.Controllers
             try
             {
                 await _context.Database.ExecuteSqlRawAsync("DELETE FROM FlavourWheels;");
-                await _context.Database.ExecuteSqlRawAsync("ALTER TABLE FlavourWheels AUTO_INCREMENT = 1;");
+                await _context.Database.ExecuteSqlRawAsync("DBCC CHECKIDENT ('FlavourWheels', RESEED, 0);");
+                _logger.LogInformation("All FlavourWheel entries deleted and ID reset");
                 return NoContent();
             }
             catch (Exception ex)
