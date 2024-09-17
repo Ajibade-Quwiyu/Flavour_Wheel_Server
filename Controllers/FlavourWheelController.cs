@@ -156,17 +156,30 @@ namespace Flavour_Wheel_Server.Controllers
         [HttpDelete]
         public async Task<IActionResult> DeleteAll()
         {
+            using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                await _context.Database.ExecuteSqlRawAsync("DELETE FROM FlavourWheels;");
-                await _context.Database.ExecuteSqlRawAsync("DBCC CHECKIDENT ('FlavourWheels', RESEED, 0);");
-                _logger.LogInformation("All FlavourWheel entries deleted and ID reset");
+                _logger.LogInformation("Attempting to delete all FlavourWheel entries");
+                
+                // Delete all entries
+                await _context.FlavourWheels.ExecuteDeleteAsync();
+                
+                // Reset the ID counter (this approach should work for most database providers)
+                var sqlCommand = _context.Database.IsSqlServer() 
+                    ? "DBCC CHECKIDENT ('FlavourWheels', RESEED, 0)" 
+                    : "ALTER TABLE FlavourWheels AUTO_INCREMENT = 1";
+                await _context.Database.ExecuteSqlRawAsync(sqlCommand);
+
+                await transaction.CommitAsync();
+                
+                _logger.LogInformation("All FlavourWheel entries deleted and ID reset successfully");
                 return NoContent();
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error occurred while deleting all FlavourWheels");
-                return StatusCode(500, "Internal server error occurred while deleting all entities");
+                return StatusCode(500, $"Internal server error occurred while deleting all entities: {ex.Message}");
             }
         }
 
