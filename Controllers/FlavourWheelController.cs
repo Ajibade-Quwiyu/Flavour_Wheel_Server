@@ -161,7 +161,7 @@ namespace Flavour_Wheel_Server.Controllers
             {
                 _logger.LogInformation("Attempting to delete all FlavourWheel entries");
                 
-                // Delete all entries
+                // Delete all entries.
                 await _context.FlavourWheels.ExecuteDeleteAsync();
                 
                 // Reset the ID counter (this approach should work for most database providers)
