@@ -71,6 +71,15 @@ namespace Flavour_Wheel_Server.Controllers
             {
                 _logger.LogInformation($"Attempting to create FlavourWheel: {JsonSerializer.Serialize(flavourWheel)}");
 
+                // Check for existing FlavourWheel with the same username
+                var existingFlavourWheel = await _context.FlavourWheels.FirstOrDefaultAsync(fw => fw.Username == flavourWheel.Username);
+                if (existingFlavourWheel != null)
+                {
+                    _logger.LogWarning($"Attempted to create duplicate entry for username: {flavourWheel.Username}");
+                    return Conflict($"A FlavourWheel with username {flavourWheel.Username} already exists");
+                }
+
+                flavourWheel.Id = 0; // Ensure a new entry is created
                 _context.FlavourWheels.Add(flavourWheel);
                 await _context.SaveChangesAsync();
 
@@ -96,16 +105,41 @@ namespace Flavour_Wheel_Server.Controllers
         {
             try
             {
+                if (id != flavourWheel.Id)
+                {
+                    _logger.LogWarning($"ID mismatch: URL id {id} doesn't match body id {flavourWheel.Id}");
+                    return BadRequest("ID in the URL must match the ID in the request body");
+                }
+
                 var existingFlavourWheel = await _context.FlavourWheels.FindAsync(id);
 
                 if (existingFlavourWheel == null)
                 {
+                    // Check if a FlavourWheel with the same username already exists
+                    var duplicateUsername = await _context.FlavourWheels.FirstOrDefaultAsync(fw => fw.Username == flavourWheel.Username);
+                    if (duplicateUsername != null)
+                    {
+                        _logger.LogWarning($"Attempted to create duplicate entry for username: {flavourWheel.Username}");
+                        return Conflict($"A FlavourWheel with username {flavourWheel.Username} already exists");
+                    }
+
                     _logger.LogInformation($"FlavourWheel with id {id} not found. Creating new entry.");
                     flavourWheel.Id = 0; // Ensure a new entry is created
                     _context.FlavourWheels.Add(flavourWheel);
                 }
                 else
                 {
+                    // Check if updating the username would create a duplicate
+                    if (existingFlavourWheel.Username != flavourWheel.Username)
+                    {
+                        var duplicateUsername = await _context.FlavourWheels.FirstOrDefaultAsync(fw => fw.Username == flavourWheel.Username && fw.Id != id);
+                        if (duplicateUsername != null)
+                        {
+                            _logger.LogWarning($"Attempted to update to a duplicate username: {flavourWheel.Username}");
+                            return Conflict($"A FlavourWheel with username {flavourWheel.Username} already exists");
+                        }
+                    }
+
                     _context.Entry(existingFlavourWheel).CurrentValues.SetValues(flavourWheel);
                 }
 
@@ -183,9 +217,28 @@ namespace Flavour_Wheel_Server.Controllers
             }
         }
 
-        private bool FlavourWheelExists(int id)
+        // GET: api/flavourwheel/byusername/{username}
+        [HttpGet("byusername/{username}")]
+        public async Task<ActionResult<FlavourWheel>> GetByUsername(string username)
         {
-            return _context.FlavourWheels.Any(e => e.Id == id);
+            try
+            {
+                var flavourWheel = await _context.FlavourWheels.FirstOrDefaultAsync(fw => fw.Username == username);
+
+                if (flavourWheel == null)
+                {
+                    _logger.LogWarning($"FlavourWheel with username {username} not found");
+                    return NotFound($"FlavourWheel with username {username} not found");
+                }
+
+                _logger.LogInformation($"Retrieved FlavourWheel with username {username}");
+                return flavourWheel;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error occurred while getting FlavourWheel with username {username}");
+                return StatusCode(500, "Internal server error occurred while retrieving data");
+            }
         }
     }
 }
