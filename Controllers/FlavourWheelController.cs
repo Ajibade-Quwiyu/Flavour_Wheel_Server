@@ -156,14 +156,57 @@ namespace Flavour_Wheel_Server.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            // ... (unchanged)
+            try
+            {
+                var flavourWheel = await _context.FlavourWheels.FindAsync(id);
+                if (flavourWheel == null)
+                {
+                    _logger.LogWarning($"FlavourWheel with id {id} not found for deletion");
+                    return NotFound($"FlavourWheel with id {id} not found");
+                }
+
+                _context.FlavourWheels.Remove(flavourWheel);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation($"FlavourWheel with id {id} deleted successfully");
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error occurred while deleting FlavourWheel with id {id}");
+                return StatusCode(500, "Internal server error occurred while deleting the entity");
+            }
         }
 
         // DELETE: api/flavourwheel
         [HttpDelete]
         public async Task<IActionResult> DeleteAll()
         {
-            // ... (unchanged)
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                _logger.LogInformation("Attempting to delete all FlavourWheel entries");
+                
+                // Delete all entries
+                await _context.FlavourWheels.ExecuteDeleteAsync();
+                
+                // Reset the ID counter (this approach should work for most database providers)
+                var sqlCommand = _context.Database.IsSqlServer() 
+                    ? "DBCC CHECKIDENT ('FlavourWheels', RESEED, 0)" 
+                    : "ALTER TABLE FlavourWheels AUTO_INCREMENT = 1";
+                await _context.Database.ExecuteSqlRawAsync(sqlCommand);
+
+                await transaction.CommitAsync();
+                
+                _logger.LogInformation("All FlavourWheel entries deleted and ID reset successfully");
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Error occurred while deleting all FlavourWheels");
+                return StatusCode(500, $"Internal server error occurred while deleting all entities: {ex.Message}");
+            }
         }
 
         // GET: api/flavourwheel/byusername/{username}
